@@ -10,6 +10,7 @@ const MOCK_TEACHERS = {
     name: "Pending Teacher",
     status: "PENDING",
     assignedClasses: [],
+    subject: "General Education",
   },
   "teacher1@school.org": {
     email: "teacher1@school.org",
@@ -17,6 +18,7 @@ const MOCK_TEACHERS = {
     name: "Sarah Johnson",
     status: "APPROVED",
     assignedClasses: ["Grade 6A"],
+    subject: "Mathematics",
   },
   "teacher2@school.org": {
     email: "teacher2@school.org",
@@ -24,6 +26,7 @@ const MOCK_TEACHERS = {
     name: "Michael Chen",
     status: "APPROVED",
     assignedClasses: ["Grade 7A", "Grade 7B"],
+    subject: "Science",
   },
   "admin": {
     email: "admin",
