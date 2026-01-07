@@ -9,10 +9,20 @@ export default function LoginPage() {
 
   const handleLogin = () => {
     localStorage.setItem("loggedIn", "true");
-    localStorage.setItem("userRole", role);
+    localStorage.setItem("userRole", role === "coordinator" ? "admin" : "teacher");
     
-    // Redirect based on role
+    // Set guest teacher data
+    const guestTeacher = {
+      email: "guest@school.org",
+      name: "Guest User",
+      status: "APPROVED",
+      assignedClasses: ["Demo Class"],
+      subject: "All Subjects",
+      isGuest: true
+    };
+    
     if (role === "coordinator") {
+      localStorage.setItem("adminData", JSON.stringify(guestTeacher));
       navigate("/admin/dashboard");
     } else {
       navigate("/dashboard");
@@ -119,7 +129,7 @@ export default function LoginPage() {
                        transform hover:scale-[1.02] transition-all duration-200
                        shadow-md hover:shadow-lg"
           >
-            Login to Dashboard
+            Continue as Guest
           </button>
 
           {/* Helper text */}

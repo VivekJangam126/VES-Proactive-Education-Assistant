@@ -1,8 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTeacher } from "../../context/TeacherContext";
 import LanguageSelector from "../LanguageSelector";
 
 function RegisterModal({ isOpen, onClose, onSwitchToLogin }) {
   if (!isOpen) return null;
+
+  const navigate = useNavigate();
+  const { loginTeacher } = useTeacher();
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -22,6 +27,33 @@ function RegisterModal({ isOpen, onClose, onSwitchToLogin }) {
   const handleSubmit = () => {
     console.log("Registration data:", formData);
     alert("Account created successfully!");
+  };
+
+  const handleGuestLogin = () => {
+    localStorage.setItem("loggedIn", "true");
+    localStorage.setItem("userRole", formData.role === "coordinator" ? "admin" : "teacher");
+    
+    // Set guest user data
+    const guestUser = {
+      email: "guest@school.org",
+      name: "Guest User",
+      status: "APPROVED",
+      assignedClasses: ["Demo Class"],
+      subject: "All Subjects",
+      isGuest: true
+    };
+    
+    if (formData.role === "teacher") {
+      loginTeacher(guestUser);
+    } else {
+      localStorage.setItem("adminData", JSON.stringify(guestUser));
+    }
+    
+    // Trigger custom event for route update
+    window.dispatchEvent(new Event("localStorageUpdate"));
+    onClose();
+    
+    setTimeout(() => navigate(formData.role === "coordinator" ? "/admin/dashboard" : "/dashboard"), 100);
   };
 
   return (
@@ -182,6 +214,19 @@ function RegisterModal({ isOpen, onClose, onSwitchToLogin }) {
                      shadow-md hover:shadow-lg"
         >
           Create Account
+        </button>
+
+        {/* Guest Login Button */}
+        <button 
+          onClick={handleGuestLogin}
+          className="w-full mt-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white
+                     font-semibold py-3 rounded-lg
+                     hover:from-gray-700 hover:to-gray-800
+                     focus:outline-none focus:ring-4 focus:ring-gray-200
+                     transform hover:scale-[1.02] transition-all duration-200
+                     shadow-md hover:shadow-lg"
+        >
+          Continue as Guest
         </button>
 
         {/* Switch to Login */}
