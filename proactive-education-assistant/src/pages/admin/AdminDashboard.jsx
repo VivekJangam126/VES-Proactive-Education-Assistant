@@ -12,7 +12,7 @@ function AdminDashboard() {
 
   const loadDashboardData = async () => {
     setLoading(true);
-    const result = await adminService.getAnalytics();
+    const result = await adminService.getAdminDashboardStats();
     if (result.success) {
       setStats(result.data);
     }

@@ -13,7 +13,7 @@ function Analytics() {
 
   const loadAnalytics = async () => {
     setLoading(true);
-    const result = await adminService.getAnalytics();
+    const result = await adminService.getAdminAnalytics();
     if (result.success) {
       setAnalytics(result.data);
     }

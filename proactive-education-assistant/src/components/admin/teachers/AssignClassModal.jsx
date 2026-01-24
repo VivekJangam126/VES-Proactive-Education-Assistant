@@ -1,16 +1,26 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { approvalService } from '../../../services/approvalService';
 import { FaTimes } from 'react-icons/fa';
 
 function AssignClassModal({ teacher, classes, onClose, onSuccess }) {
-  const [selectedClasses, setSelectedClasses] = useState(teacher.assignedClasses || []);
+  const idByName = useMemo(() => {
+    const map = new Map();
+    classes.forEach(c => map.set(c.name, c.id));
+    return map;
+  }, [classes]);
+
+  const initialSelected = (teacher.assignedClasses || [])
+    .map(name => idByName.get(name))
+    .filter(Boolean);
+
+  const [selectedClasses, setSelectedClasses] = useState(initialSelected);
   const [assigning, setAssigning] = useState(false);
 
-  const handleClassToggle = (className) => {
+  const handleClassToggle = (classId) => {
     setSelectedClasses(prev =>
-      prev.includes(className)
-        ? prev.filter(c => c !== className)
-        : [...prev, className]
+      prev.includes(classId)
+        ? prev.filter(c => c !== classId)
+        : [...prev, classId]
     );
   };
 
@@ -63,15 +73,15 @@ function AssignClassModal({ teacher, classes, onClose, onSuccess }) {
                 <label
                   key={cls.id}
                   className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    selectedClasses.includes(cls.name)
+                    selectedClasses.includes(cls.id)
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-blue-300'
                   }`}
                 >
                   <input
                     type="checkbox"
-                    checked={selectedClasses.includes(cls.name)}
-                    onChange={() => handleClassToggle(cls.name)}
+                    checked={selectedClasses.includes(cls.id)}
+                    onChange={() => handleClassToggle(cls.id)}
                     className="mr-3 h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <div className="flex-1">
@@ -91,7 +101,7 @@ function AssignClassModal({ teacher, classes, onClose, onSuccess }) {
                   Selected Classes ({selectedClasses.length}):
                 </p>
                 <p className="text-sm text-green-700 mt-1">
-                  {selectedClasses.join(', ')}
+                  {selectedClasses.map(id => classes.find(c => c.id === id)?.name || id).join(', ')}
                 </p>
               </div>
             )}

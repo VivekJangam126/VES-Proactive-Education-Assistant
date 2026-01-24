@@ -5,10 +5,13 @@ import { FaTimes } from 'react-icons/fa';
 function AddEditClassModal({ classData, onClose, onSuccess }) {
   const isEdit = !!classData;
   
+  const SUBJECT_OPTIONS = ["Math", "Science", "English", "History", "Geography", "Computer"];
+
   const [formData, setFormData] = useState({
     name: classData?.name || '',
     description: classData?.description || '',
     grade: classData?.grade || '',
+    subjects: Array.isArray(classData?.subjects) ? classData.subjects : [],
   });
   const [saving, setSaving] = useState(false);
 
@@ -27,14 +30,18 @@ function AddEditClassModal({ classData, onClose, onSuccess }) {
       alert('Please fill in all required fields');
       return;
     }
+    if (!Array.isArray(formData.subjects) || formData.subjects.length === 0) {
+      alert('Please select at least one subject');
+      return;
+    }
 
     setSaving(true);
     try {
       let result;
       if (isEdit) {
-        result = await adminService.updateClass(classData.id, formData);
+        result = await adminService.updateClass(classData.id, { name: formData.name, subjects: formData.subjects });
       } else {
-        result = await adminService.addClass(formData);
+        result = await adminService.addClass({ name: formData.name, subjects: formData.subjects });
       }
 
       if (result.success) {
@@ -110,6 +117,38 @@ function AddEditClassModal({ classData, onClose, onSuccess }) {
               rows="3"
               placeholder="e.g., Morning batch for Grade 7 students"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Subjects <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {SUBJECT_OPTIONS.map((subj) => (
+                <label key={subj} className="flex items-center gap-2 p-2 border rounded-md hover:bg-gray-50">
+                  <input
+                    type="checkbox"
+                    checked={formData.subjects.includes(subj)}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setFormData((prev) => ({
+                        ...prev,
+                        subjects: checked
+                          ? [...prev.subjects, subj]
+                          : prev.subjects.filter((s) => s !== subj),
+                      }));
+                    }}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm text-gray-800">{subj}</span>
+                </label>
+              ))}
+            </div>
+            {formData.subjects.length > 0 && (
+              <p className="text-xs text-gray-600 mt-2">
+                Selected: {formData.subjects.join(', ')}
+              </p>
+            )}
           </div>
 
           {/* Footer */}

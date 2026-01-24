@@ -1,43 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { useTeacher } from "../../context/TeacherContext";
 import LanguageSelector from "../LanguageSelector";
-
-// Mock teacher database (in real app, this would be an API call)
-const MOCK_TEACHERS = {
-  "pending@school.org": {
-    email: "pending@school.org",
-    password: "123",
-    name: "Pending Teacher",
-    status: "PENDING",
-    assignedClasses: [],
-    subject: "General Education",
-  },
-  "teacher1@school.org": {
-    email: "teacher1@school.org",
-    password: "123",
-    name: "Sarah Johnson",
-    status: "APPROVED",
-    assignedClasses: ["Grade 6A"],
-    subject: "Mathematics",
-  },
-  "teacher2@school.org": {
-    email: "teacher2@school.org",
-    password: "123",
-    name: "Michael Chen",
-    status: "APPROVED",
-    assignedClasses: ["Grade 7A", "Grade 7B"],
-    subject: "Science",
-  },
-  "admin": {
-    email: "admin",
-    password: "123",
-    name: "Admin",
-    role: "coordinator",
-    status: "APPROVED",
-    assignedClasses: [],
-  },
-};
 
 function Modal({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) {
   if (!isOpen) return null;
@@ -47,61 +12,63 @@ function Modal({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) {
   const [role, setRole] = useState("teacher");
   const [errorMessage, setErrorMessage] = useState("");
   const [pendingApproval, setPendingApproval] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
+  const { login } = useAuth();
   const { loginTeacher } = useTeacher();
   const navigate = useNavigate();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setErrorMessage("");
     setPendingApproval(false);
-    
-    // Find teacher in mock database
-    const teacher = MOCK_TEACHERS[email];
-    
-    if (!teacher || teacher.password !== password) {
-      setErrorMessage("Invalid email or password");
+    setIsLoading(true);
+
+    if (!email || !password) {
+      setErrorMessage("Email and password are required");
+      setIsLoading(false);
       return;
     }
-    
-    // Check if teacher account is pending approval
-    if (role === "teacher" && teacher.status === "PENDING") {
-      setPendingApproval(true);
-      setErrorMessage("Your account is awaiting admin approval. Please contact your coordinator.");
-      return;
-    }
-    
-    // Login successful
-    if (role === "teacher") {
-      loginTeacher(teacher);
-      localStorage.setItem("loggedIn", "true");
-      localStorage.setItem("userRole", "teacher");
-      // Trigger custom event for route update
-      window.dispatchEvent(new Event("localStorageUpdate"));
-      setEmail("");
-      setPassword("");
-      setRole("teacher");
-      onClose();
-      if (onLoginSuccess) {
-        onLoginSuccess();
-      } else {
-        setTimeout(() => navigate("/dashboard"), 100);
+
+    try {
+      if (role === "teacher") {
+        const userData = await login(email, password, "TEACHER");
+        // Also set TeacherContext for compatibility
+        if (userData) {
+          loginTeacher(userData);
+        }
+
+        setEmail("");
+        setPassword("");
+        setRole("teacher");
+        onClose();
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        }
+        navigate("/dashboard", { replace: true });
+      } else if (role === "coordinator") {
+        await login(email, password, "ADMIN");
+
+        setEmail("");
+        setPassword("");
+        setRole("teacher");
+        onClose();
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        }
+        navigate("/admin/dashboard", { replace: true });
       }
-    } else if (role === "coordinator") {
-      // Admin login
-      localStorage.setItem("loggedIn", "true");
-      localStorage.setItem("userRole", "admin");
-      localStorage.setItem("adminData", JSON.stringify(teacher));
-      // Trigger custom event for route update
-      window.dispatchEvent(new Event("localStorageUpdate"));
-      setEmail("");
-      setPassword("");
-      setRole("teacher");
-      onClose();
-      if (onLoginSuccess) {
-        onLoginSuccess();
+    } catch (error) {
+      // Check for specific error codes from the API
+      if (error.message && error.message.includes("not approved")) {
+        setPendingApproval(true);
+        setErrorMessage("Your account is awaiting admin approval. Please contact your coordinator.");
+      } else if (error.message && error.message.includes("Invalid credentials")) {
+        setErrorMessage("Invalid email or password");
       } else {
-        setTimeout(() => navigate("/admin/dashboard"), 100);
+        setErrorMessage(error.message || "Login failed. Please try again.");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -229,14 +196,16 @@ function Modal({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) {
         {/* Login Button */}
         <button 
           onClick={handleLogin}
+          disabled={isLoading}
           className="w-full mt-4 bg-linear-to-r from-blue-500 to-teal-500 text-white
                      font-semibold py-2.5 rounded-lg text-sm
                      hover:from-blue-600 hover:to-teal-600
                      focus:outline-none focus:ring-4 focus:ring-blue-200
                      transform hover:scale-[1.02] transition-all duration-200
-                     shadow-md hover:shadow-lg"
+                     shadow-md hover:shadow-lg
+                     disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
-          Login to Dashboard
+          {isLoading ? "Logging in..." : "Login to Dashboard"}
         </button>
 
         {/* Helper text */}
