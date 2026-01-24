@@ -1,67 +1,26 @@
-// Approval Service - Handles teacher approval and class assignment
-
-const delay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
+// Approval Service - Calls admin API for approval flows
+import { apiClient } from './apiClient';
 
 export const approvalService = {
   // Approve a teacher
-  async approveTeacher(teacherId, assignedClasses = []) {
-    await delay();
-    console.log(`Approving teacher ${teacherId} with classes:`, assignedClasses);
-    return {
-      success: true,
-      message: 'Teacher approved successfully',
-      data: {
-        id: teacherId,
-        status: 'approved',
-        assignedClasses,
-        approvedAt: new Date().toISOString()
-      }
-    };
+  async approveTeacher(teacherId, assignedClassIds = []) {
+    const res = await apiClient.patch(`/admin/teachers/${teacherId}/approve`, {
+      assignedClasses: assignedClassIds,
+    });
+    return { success: true, data: res.teacher };
   },
 
   // Reject a teacher
-  async rejectTeacher(teacherId, reason = '') {
-    await delay();
-    console.log(`Rejecting teacher ${teacherId}. Reason:`, reason);
-    return {
-      success: true,
-      message: 'Teacher rejected',
-      data: {
-        id: teacherId,
-        status: 'rejected',
-        rejectionReason: reason,
-        rejectedAt: new Date().toISOString()
-      }
-    };
+  async rejectTeacher(teacherId) {
+    const res = await apiClient.patch(`/admin/teachers/${teacherId}/reject`);
+    return { success: true, data: res.teacher };
   },
 
   // Assign classes to a teacher
-  async assignClasses(teacherId, classIds) {
-    await delay();
-    console.log(`Assigning classes to teacher ${teacherId}:`, classIds);
-    return {
-      success: true,
-      message: 'Classes assigned successfully',
-      data: {
-        teacherId,
-        assignedClasses: classIds,
-        updatedAt: new Date().toISOString()
-      }
-    };
+  async assignClasses(teacherId, classIds = []) {
+    const res = await apiClient.patch(`/admin/teachers/${teacherId}/assign-classes`, {
+      assignedClasses: classIds,
+    });
+    return { success: true, data: res.teacher };
   },
-
-  // Update teacher status
-  async updateTeacherStatus(teacherId, status) {
-    await delay();
-    console.log(`Updating teacher ${teacherId} status to:`, status);
-    return {
-      success: true,
-      message: 'Status updated successfully',
-      data: {
-        id: teacherId,
-        status,
-        updatedAt: new Date().toISOString()
-      }
-    };
-  }
 };

@@ -1,22 +1,38 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { students } from '../../data/students';
+import { adminService } from '../../services/adminService';
 import StudentTable from '../../components/admin/students/StudentTable';
 import RiskBadge from '../../components/RiskBadge';
 
 function StudentOverview() {
   const navigate = useNavigate();
-  const [filteredStudents, setFilteredStudents] = useState(students);
+  const [students, setStudents] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]);
   const [classFilter, setClassFilter] = useState('all');
   const [riskFilter, setRiskFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
 
   // Get unique classes
   const classes = ['all', ...new Set(students.map(s => s.class))];
   const riskLevels = ['all', 'high', 'medium', 'low'];
 
   useEffect(() => {
+    loadStudents();
+  }, []);
+
+  useEffect(() => {
     filterStudents();
-  }, [classFilter, riskFilter]);
+  }, [classFilter, riskFilter, students]);
+
+  const loadStudents = async () => {
+    setLoading(true);
+    const res = await adminService.getAllStudents();
+    if (res.success) {
+      setStudents(res.data);
+      setFilteredStudents(res.data);
+    }
+    setLoading(false);
+  };
 
   const filterStudents = () => {
     let filtered = [...students];
@@ -42,8 +58,16 @@ function StudentOverview() {
     high: students.filter(s => s.riskLevel === 'high').length,
     medium: students.filter(s => s.riskLevel === 'medium').length,
     low: students.filter(s => s.riskLevel === 'low').length,
-    avgAttendance: Math.round(students.reduce((sum, s) => sum + s.attendance, 0) / students.length)
+    avgAttendance: students.length > 0 ? Math.round(students.reduce((sum, s) => sum + (s.attendance || 0), 0) / students.length) : 0
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
