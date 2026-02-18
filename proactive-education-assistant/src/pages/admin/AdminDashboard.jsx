@@ -4,8 +4,22 @@ import { RiskTrendChart } from '../../components/admin/dashboard/RiskTrendChart'
 import { AlertsPanel } from '../../components/admin/dashboard/AlertsPanel';
 import { useAdmin } from '../../context/AdminContext';
 
-export const AdminDashboard = () => {
-  const { stats, riskDistribution, riskTrendData, alerts, loading } = useAdmin();
+function AdminDashboard() {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    setLoading(true);
+    const result = await adminService.getAdminDashboardStats();
+    if (result.success) {
+      setStats(result.data);
+    }
+    setLoading(false);
+  };
 
   if (loading) {
     return (

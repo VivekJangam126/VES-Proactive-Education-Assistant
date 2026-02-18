@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { ProtectedRoute } from "./ProtectedRoute";
+import { useAuth } from "../context/AuthContext";
 
+// Public pages
 import LandingPage from "../pages/LandingPage";
 import PricingTable from "../pages/payement/PricingTable";
 import PaymentUI from "../pages/payement/PaymentUI";
-import AboutPage from "../pages/AboutPage";
-import ForgotPassword from "../pages/auth/ForgotPassword";
 
+// Teacher pages
 import DashboardPage from "../pages/teacher/DashboardPage";
 import StudentListPage from "../pages/teacher/StudentListPage";
 import StudentProfilePage from "../pages/teacher/StudentProfilePage";
@@ -19,8 +20,7 @@ import LoginPage from "../pages/teacher/LoginPage";
 
 import MainLayout from "../layouts/MainLayout";
 
-// Admin
-import { AdminProvider } from "../context/AdminContext";
+// Admin pages
 import AdminLayout from "../layouts/AdminLayout";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import TeacherManagement from "../pages/admin/TeacherManagement";
@@ -29,123 +29,99 @@ import SubjectManagement from "../pages/admin/SubjectManagement";
 import Analytics from "../pages/admin/Analytics";
 
 export default function AppRoutes() {
-  const readAuthState = () => {
-    const tokenFromLocal = localStorage.getItem("token");
-    const roleFromLocal = localStorage.getItem("role");
-    const tokenFromSession = sessionStorage.getItem("token");
-    const roleFromSession = sessionStorage.getItem("role");
+  const { loading, isAuthenticated, role } = useAuth();
 
-    if (tokenFromLocal && roleFromLocal) {
-      return { token: tokenFromLocal, role: roleFromLocal };
-    }
-
-    if (tokenFromSession && roleFromSession) {
-      return { token: tokenFromSession, role: roleFromSession };
-    }
-
-    return { token: null, role: null };
-  };
-
-  const [authState, setAuthState] = useState(readAuthState());
-  const isLoggedIn = Boolean(authState.token);
-  const userRole = authState.role;
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setAuthState(readAuthState());
-    };
-
-    handleStorageChange();
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("focus", handleStorageChange);
-    window.addEventListener("localStorageUpdate", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("focus", handleStorageChange);
-      window.removeEventListener("localStorageUpdate", handleStorageChange);
-    };
-  }, []);
+  // Show loading while session is being restored
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Initializing...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Routes>
-      {/* Public Pages */}
-      <Route path="/" element={<LandingPage />} />
+      {/* ============ PUBLIC ROUTES ============ */}
+      <Route 
+        path="/" 
+        element={
+          isAuthenticated ? (
+            <Navigate to={role === "ADMIN" ? "/admin/dashboard" : "/dashboard"} replace />
+          ) : (
+            <LandingPage />
+          )
+        } 
+      />
       <Route path="/pricing" element={<PricingTable />} />
       <Route path="/payment" element={<PaymentUI />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      
-      {/* Teacher Login */}
-      <Route 
-        path="/teacher/login" 
+
+      {/* ============ ADMIN ROUTES (PROTECTED) ============ */}
+      <Route
+        path="/admin/*"
         element={
-          isLoggedIn && userRole === "teacher" 
-            ? <Navigate to="/teacher/dashboard" replace /> 
-            : <LoginPage />
-        } 
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
+            <Routes>
+              <Route element={<AdminLayout />}>
+                <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="teachers" element={<TeacherManagement />} />
+                <Route path="classes" element={<ClassManagement />} />
+                <Route path="students" element={<StudentOverview />} />
+                <Route path="data-import" element={<DataImport />} />
+                <Route path="analytics" element={<Analytics />} />
+              </Route>
+            </Routes>
+          </ProtectedRoute>
+        }
       />
-      
-      {/* Admin Login */}
-      <Route 
-        path="/admin/login" 
+
+      {/* ============ TEACHER ROUTES (PROTECTED) ============ */}
+      <Route
+        path="/dashboard"
         element={
-          isLoggedIn && userRole === "admin" 
-            ? <Navigate to="/admin/dashboard" replace /> 
-            : <LoginPage />
-        } 
+          <ProtectedRoute allowedRoles={["TEACHER"]}>
+            <MainLayout>
+              <DashboardPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/students"
+        element={
+          <ProtectedRoute allowedRoles={["TEACHER"]}>
+            <MainLayout>
+              <StudentListPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/students/:id"
+        element={
+          <ProtectedRoute allowedRoles={["TEACHER"]}>
+            <MainLayout>
+              <StudentProfilePage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute allowedRoles={["TEACHER"]}>
+            <MainLayout>
+              <ProfilePage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
       />
 
-      {/* Admin Routes */}
-      {isLoggedIn && userRole === "admin" ? (
-        <Route 
-          path="/admin" 
-          element={
-            <AdminProvider>
-              <AdminLayout />
-            </AdminProvider>
-          }
-        >
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="teachers" element={<TeacherManagement />} />
-          <Route path="classes" element={<ClassManagement />} />
-          <Route path="subjects" element={<SubjectManagement />} />
-          <Route path="analytics" element={<Analytics />} />
-        </Route>
-      ) : (
-        <Route path="/admin/*" element={<Navigate to="/" replace />} />
-      )}
-
-      {/* Teacher Routes */}
-      {isLoggedIn && userRole === "teacher" ? (
-        <>
-          <Route element={<MainLayout />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/teacher/dashboard" element={<DashboardPage />} />
-            <Route path="/my-classes" element={<MyClassesPage />} />
-            <Route path="/students" element={<StudentListPage />} />
-            <Route path="/students/:id" element={<StudentProfilePage />} />
-            <Route path="/add-student" element={<AddStudentPage />} />
-            <Route path="/data-entry" element={<DataEntryPage />} />
-            <Route path="/gamification" element={<GamificationPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/about" element={<AboutPage />} />
-          </Route>
-        </>
-      ) : (
-        <>
-          <Route path="/dashboard" element={<Navigate to="/" replace />} />
-          <Route path="/teacher/*" element={<Navigate to="/" replace />} />
-          <Route path="/my-classes" element={<Navigate to="/" replace />} />
-          <Route path="/students/*" element={<Navigate to="/" replace />} />
-          <Route path="/add-student" element={<Navigate to="/" replace />} />
-          <Route path="/data-entry" element={<Navigate to="/" replace />} />
-          <Route path="/gamification" element={<Navigate to="/" replace />} />
-          <Route path="/profile" element={<Navigate to="/" replace />} />
-        </>
-      )}
-
-      {/* Catch all - redirect to home */}
+      {/* ============ CATCH ALL ============ */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

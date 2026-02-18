@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useState, useEffect } from "react";
+import { authService } from "../../services/authService";
+import { organisationService } from "../../services/organisationService";
 import LanguageSelector from "../LanguageSelector";
 
 const ROLE_ADMIN = "admin";
@@ -20,94 +20,118 @@ const initialFormState = {
 function RegisterModal({ isOpen, onClose, onSwitchToLogin }) {
   if (!isOpen) return null;
 
-  const navigate = useNavigate();
-  const { t } = useTranslation();
-  const [step, setStep] = useState("role");
-  const [role, setRole] = useState("");
-  const [formData, setFormData] = useState(initialFormState);
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    role: "teacher",
+    organization: ""
+  });
+  const [organisations, setOrganisations] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const schoolIdPattern = /^SCH-[A-Z0-9]{4,10}$/;
-
-  const handleRoleSelect = (nextRole) => {
-    setRole(nextRole);
-    setStep("form");
-    setFormData(initialFormState);
-    setErrors({});
-  };
-
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    const nextValue = name === "schoolId" ? value.toUpperCase() : value;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: nextValue
-    }));
-  };
-
-  const validateForm = () => {
-    const nextErrors = {};
-
-    if (!role) {
-      nextErrors.role = "Select a role to continue.";
-    }
-
-    if (!formData.fullName.trim()) {
-      nextErrors.fullName = "Full name is required.";
-    }
-
-    if (!formData.email.trim()) {
-      nextErrors.email = "Email is required.";
-    }
-
-    if (!formData.password) {
-      nextErrors.password = "Password is required.";
-    } else if (formData.password.length < 6) {
-      nextErrors.password = "Password must be at least 6 characters.";
-    }
-
-    if (!formData.confirmPassword) {
-      nextErrors.confirmPassword = "Confirm your password.";
-    } else if (formData.password !== formData.confirmPassword) {
-      nextErrors.confirmPassword = "Passwords do not match.";
-    }
-
-    if (role === ROLE_ADMIN) {
-      if (!formData.schoolName.trim()) {
-        nextErrors.schoolName = "School name is required.";
+  // Fetch organisations on mount
+  useEffect(() => {
+    const fetchOrganisations = async () => {
+      try {
+        const data = await organisationService.getOrganisations();
+        setOrganisations(data || []);
+      } catch (error) {
+        console.error("Failed to fetch organisations:", error);
       }
-    }
+    };
+    fetchOrganisations();
+  }, []);
 
-    if (role === ROLE_TEACHER) {
-      if (!formData.schoolId.trim()) {
-        nextErrors.schoolId = "School ID is required.";
-      } else if (!schoolIdPattern.test(formData.schoolId.trim())) {
-        nextErrors.schoolId = "Use format SCH-XXXX (letters/numbers).";
-      }
-    }
-
-    return nextErrors;
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const nextErrors = validateForm();
-    setErrors(nextErrors);
+  const handleSubmit = async () => {
+    setErrorMessage("");
+    setSuccessMessage("");
 
-    if (Object.keys(nextErrors).length > 0) {
+    // Validation
+    if (!formData.fullName || !formData.email || !formData.password) {
+      setErrorMessage("Name, email, and password are required");
       return;
     }
 
-    setIsSubmitting(true);
+    if (formData.password.length < 6) {
+      setErrorMessage("Password must be at least 6 characters");
+      return;
+    }
+
+    if (formData.role === "teacher" && !formData.organization) {
+      setErrorMessage("Please select an organization");
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const targetRoute = role === ROLE_ADMIN ? "/admin/dashboard" : "/teacher/dashboard";
-      onClose();
-      navigate(targetRoute);
+      if (formData.role === "teacher") {
+        // Find the organisation ID by name
+        const org = organisations.find(o => o.name === formData.organization);
+        if (!org) {
+          setErrorMessage("Please select a valid organization");
+          setLoading(false);
+          return;
+        }
+
+        const response = await authService.teacherRegister(
+          formData.fullName,
+          formData.email,
+          formData.password,
+          org._id
+        );
+        
+        if (response) {
+          setSuccessMessage("Registration successful! Your account is pending admin approval. Please check your email for updates.");
+          setTimeout(() => {
+            setFormData({
+              fullName: "",
+              email: "",
+              password: "",
+              role: "teacher",
+              organization: ""
+            });
+            onSwitchToLogin();
+          }, 2000);
+        }
+      } else if (formData.role === "coordinator") {
+        // Admin registration
+        const response = await authService.adminRegister(
+          formData.organization,
+          "School", // Default type, can be expanded
+          formData.fullName,
+          formData.email,
+          formData.password
+        );
+
+        if (response) {
+          setSuccessMessage("Admin account created successfully! You can now login.");
+          setTimeout(() => {
+            setFormData({
+              fullName: "",
+              email: "",
+              password: "",
+              role: "teacher",
+              organization: ""
+            });
+            onSwitchToLogin();
+          }, 2000);
+        }
+      }
     } catch (error) {
-      setErrors({ form: "Unable to create account. Please try again." });
+      setErrorMessage(error.message || "Registration failed. Please try again.");
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -149,32 +173,47 @@ function RegisterModal({ isOpen, onClose, onSwitchToLogin }) {
           </div>
         </div>
 
-        {step === "role" && (
-          <div className="space-y-4">
-            <p className="text-sm font-medium text-gray-700 mb-4">I am signing up as</p>
-            <div className="grid gap-3">
-              <button
-                type="button"
-                onClick={() => handleRoleSelect(ROLE_ADMIN)}
-                className="w-full text-left border-2 border-gray-200 hover:border-blue-500 rounded-lg p-4 transition-all group"
-              >
-                <div className="text-base font-semibold text-gray-900 group-hover:text-blue-600">Admin</div>
-                <p className="text-sm text-gray-600 mt-1">
-                  Create and manage a school or organization
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleRoleSelect(ROLE_TEACHER)}
-                className="w-full text-left border-2 border-gray-200 hover:border-blue-500 rounded-lg p-4 transition-all group"
-              >
-                <div className="text-base font-semibold text-gray-900 group-hover:text-blue-600">Teacher</div>
-                <p className="text-sm text-gray-600 mt-1">
-                  Join an existing school with a School ID
-                </p>
-              </button>
+        {/* Form */}
+        <div className="space-y-4">
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="p-3 rounded-lg text-sm bg-red-50 border border-red-200 text-red-800">
+              <div className="flex items-start gap-2">
+                <svg className="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <span>{errorMessage}</span>
+              </div>
             </div>
-            {errors.role && <p className="text-sm text-red-600">{errors.role}</p>}
+          )}
+
+          {/* Success Message */}
+          {successMessage && (
+            <div className="p-3 rounded-lg text-sm bg-green-50 border border-green-200 text-green-800">
+              <div className="flex items-start gap-2">
+                <svg className="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span>{successMessage}</span>
+              </div>
+            </div>
+          )}
+          {/* Full Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Full Name
+            </label>
+            <input
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              type="text"
+              placeholder="John Doe"
+              className="w-full px-4 py-3 rounded-lg border-2 border-gray-200
+                         text-gray-800 placeholder-gray-400
+                         focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200
+                         transition-all"
+            />
           </div>
         )}
 
@@ -229,20 +268,43 @@ function RegisterModal({ isOpen, onClose, onSwitchToLogin }) {
               {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t("signup.password_label", "Password")}
-              </label>
-              <input
-                name="password"
-                value={formData.password}
+          {/* School/Organization Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {formData.role === "teacher" ? "Select Organization" : "Create Organization Name"}
+            </label>
+            {formData.role === "teacher" ? (
+              <select
+                name="organization"
+                value={formData.organization}
                 onChange={handleChange}
-                type="password"
-                placeholder={t("signup.password_placeholder", "Create a secure password")}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 rounded-lg border-2 border-gray-200
+                           text-gray-800
+                           focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200
+                           transition-all bg-white"
+              >
+                <option value="">-- Select an organization --</option>
+                {organisations.map((org) => (
+                  <option key={org._id} value={org.name}>
+                    {org.name} ({org.type || "Organization"})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                name="organization"
+                value={formData.organization}
+                onChange={handleChange}
+                type="text"
+                placeholder="Your School or Organization Name"
+                className="w-full px-4 py-3 rounded-lg border-2 border-gray-200
+                           text-gray-800 placeholder-gray-400
+                           focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200
+                           transition-all"
               />
-              {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password}</p>}
-            </div>
+            )}
+          </div>
+        </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -259,93 +321,20 @@ function RegisterModal({ isOpen, onClose, onSwitchToLogin }) {
               {errors.confirmPassword && <p className="text-sm text-red-600 mt-1">{errors.confirmPassword}</p>}
             </div>
 
-            {role === ROLE_ADMIN && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    School Name
-                  </label>
-                  <input
-                    name="schoolName"
-                    value={formData.schoolName}
-                    onChange={handleChange}
-                    type="text"
-                    placeholder="Sunrise Public School"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-                  {errors.schoolName && <p className="text-sm text-red-600 mt-1">{errors.schoolName}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    School Type
-                  </label>
-                  <select
-                    name="schoolType"
-                    value={formData.schoolType}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  >
-                    <option value="School">School</option>
-                    <option value="NGO">NGO</option>
-                    <option value="Tuition Center">Tuition Center</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    City (Optional)
-                  </label>
-                  <input
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    type="text"
-                    placeholder="Mumbai"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-                </div>
-              </>
-            )}
-
-            {role === ROLE_TEACHER && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    School ID
-                  </label>
-                  <input
-                    name="schoolId"
-                    value={formData.schoolId}
-                    onChange={handleChange}
-                    type="text"
-                    placeholder="SCH-49A8X2"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    School ID is required to join your organization
-                  </p>
-                  {errors.schoolId && <p className="text-sm text-red-600 mt-1">{errors.schoolId}</p>}
-                </div>
-
-                {showSchoolLookupPlaceholder && (
-                  <div className="border border-blue-200 bg-blue-50 rounded-lg p-3 text-sm text-blue-800">
-                    <div className="font-medium">School Lookup</div>
-                    <div className="mt-1 text-xs">School validation will appear here after backend integration</div>
-                  </div>
-                )}
-              </>
-            )}
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-blue-600 text-white font-medium py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? "Creating Account..." : t("signup.sign_up_button", "Create Account")}
-            </button>
-          </form>
-        )}
+        {/* Register Button */}
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full mt-6 bg-linear-to-r from-teal-500 to-blue-500 text-white
+                     font-semibold py-3 rounded-lg
+                     hover:from-teal-600 hover:to-blue-600
+                     focus:outline-none focus:ring-4 focus:ring-teal-200
+                     transform hover:scale-[1.02] transition-all duration-200
+                     shadow-md hover:shadow-lg
+                     disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+        >
+          {loading ? "Creating Account..." : "Create Account"}
+        </button>
 
         <div className="mt-6 pt-6 border-t border-gray-200 text-center">
           <span className="text-sm text-gray-600">

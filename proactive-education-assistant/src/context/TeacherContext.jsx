@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const TeacherContext = createContext();
 
@@ -10,30 +11,28 @@ export const useTeacher = () => {
   return context;
 };
 
+
 export const TeacherProvider = ({ children }) => {
-  // Mock teacher data (in real app, this comes from backend after login)
+  const { user } = useAuth();
   const [teacher, setTeacher] = useState(null);
   const [selectedClass, setSelectedClass] = useState(null);
 
-  // Initialize teacher data from localStorage (mock login persistence)
+  // Sync teacher context with AuthContext user
   useEffect(() => {
-    const storedTeacher = localStorage.getItem('teacherData');
-    if (storedTeacher) {
-      const teacherData = JSON.parse(storedTeacher);
-      setTeacher(teacherData);
-      
+    if (user && user.role === 'TEACHER') {
+      setTeacher(user);
+      localStorage.setItem('teacherData', JSON.stringify(user));
       // Auto-select class if only one assigned
-      if (teacherData.assignedClasses?.length === 1) {
-        setSelectedClass(teacherData.assignedClasses[0]);
+      if (user.assignedClasses?.length === 1) {
+        setSelectedClass(user.assignedClasses[0]);
       }
     }
-  }, []);
+  }, [user]);
 
+  // Optionally keep loginTeacher for legacy/manual login flows
   const loginTeacher = (teacherData) => {
     setTeacher(teacherData);
     localStorage.setItem('teacherData', JSON.stringify(teacherData));
-    
-    // Auto-select class if only one
     if (teacherData.assignedClasses?.length === 1) {
       setSelectedClass(teacherData.assignedClasses[0]);
     }

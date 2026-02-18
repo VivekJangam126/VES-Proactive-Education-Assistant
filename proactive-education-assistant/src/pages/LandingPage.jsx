@@ -16,6 +16,9 @@ export default function LandingPage() {
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [loginRedirectPath, setLoginRedirectPath] = useState(null);
+  const { t } = useTranslation();
+  const { theme, toggleTheme } = useTheme();
+  // Removed: useAuth hook and redirect logic - routing handles this now
 
   const features = [
     {
@@ -147,12 +150,9 @@ export default function LandingPage() {
             {features.map((feature) => {
               const Icon = feature.icon;
               return (
-                <div
-                  key={feature.title}
-                  className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow"
-                >
-                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                    <Icon className="text-xl text-blue-600" />
+                <div key={index} className="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-600 hover:shadow-md transition-all duration-300 hover:scale-105 animate-in fade-in-0 slide-in-from-bottom-4" style={{ animationDelay: `${0.4 + index * 0.1}s` }}>
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center mb-4">
+                    <Icon className="text-blue-600 dark:text-blue-400 text-xl" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
                   <p className="text-sm text-gray-600">{feature.description}</p>

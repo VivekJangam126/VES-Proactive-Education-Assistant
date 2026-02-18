@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useAuth } from "../../context/AuthContext";
+import { useTeacher } from "../../context/TeacherContext";
 import LanguageSelector from "../LanguageSelector";
 
-const ROLE_ADMIN = "admin";
-const ROLE_TEACHER = "teacher";
-
-function LoginModal({ isOpen, onClose, onSwitchToRegister }) {
+function Modal({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) {
   if (!isOpen) return null;
 
   const { t } = useTranslation();
@@ -15,88 +13,64 @@ function LoginModal({ isOpen, onClose, onSwitchToRegister }) {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const { login } = useAuth();
+  const { loginTeacher } = useTeacher();
+  const navigate = useNavigate();
 
-  const getDashboardRoute = (userRole) =>
-    userRole === ROLE_ADMIN ? "/admin/dashboard" : "/teacher/dashboard";
-
-  const simulateLoginRequest = async ({ email: inputEmail, password: inputPassword }) => {
-    await new Promise((resolve) => setTimeout(resolve, 600));
-
-    if (inputEmail.includes("network")) {
-      return { ok: false, code: "NETWORK_ERROR", error: "Network error. Please try again." };
-    }
-
-    if (!inputEmail || !inputPassword) {
-      return { ok: false, code: "INVALID_CREDENTIALS", error: "Invalid credentials." };
-    }
-
-    if (inputEmail.includes("pending")) {
-      return { ok: false, code: "ACCOUNT_PENDING", error: "Account not approved yet." };
-    }
-
-    if (inputEmail.includes("inactive")) {
-      return { ok: false, code: "SCHOOL_INACTIVE", error: "School is inactive." };
-    }
-
-    const isAdmin = inputEmail.includes("admin");
-    return {
-      ok: true,
-      data: {
-        role: isAdmin ? ROLE_ADMIN : ROLE_TEACHER,
-        token: "demo-jwt-token",
-        school_id: "SCH-0000",
-        school_name: "Demo School"
-      }
-    };
-  };
-
-  const storeAuthSession = ({ token, role, school_id, school_name }) => {
-    const storage = rememberMe ? localStorage : sessionStorage;
-    storage.setItem("token", token);
-    storage.setItem("role", role);
-    storage.setItem("school_id", school_id || "");
-    storage.setItem("school_name", school_name || "");
-  };
-
-  const handleLogin = async (event) => {
-    event.preventDefault();
+  const handleLogin = async () => {
     setErrorMessage("");
+    setPendingApproval(false);
+    setIsLoading(true);
 
-    if (!email.trim() || !password) {
-      setErrorMessage("Email and password are required.");
+    if (!email || !password) {
+      setErrorMessage("Email and password are required");
+      setIsLoading(false);
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      const response = await simulateLoginRequest({ email, password });
+      if (role === "teacher") {
+        const userData = await login(email, password, "TEACHER");
+        // Also set TeacherContext for compatibility
+        if (userData) {
+          loginTeacher(userData);
+        }
 
-      if (!response.ok) {
-        setErrorMessage(response.error || "Invalid credentials.");
-        return;
+        setEmail("");
+        setPassword("");
+        setRole("teacher");
+        onClose();
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        }
+        navigate("/dashboard", { replace: true });
+      } else if (role === "coordinator") {
+        await login(email, password, "ADMIN");
+
+        setEmail("");
+        setPassword("");
+        setRole("teacher");
+        onClose();
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        }
+        navigate("/admin/dashboard", { replace: true });
       }
-
-      const { role, token, school_id, school_name } = response.data || {};
-      const resolvedRole = role;
-
-      if (resolvedRole !== ROLE_ADMIN && resolvedRole !== ROLE_TEACHER) {
-        throw new Error("Invalid role from server.");
-      }
-
-      storeAuthSession({ token, role: resolvedRole, school_id, school_name });
-      
-      // Trigger custom event for route update
-      window.dispatchEvent(new Event("localStorageUpdate"));
-      
-      const targetRoute = getDashboardRoute(resolvedRole);
-      onClose();
-      navigate(targetRoute);
-
     } catch (error) {
-      setErrorMessage("Unable to sign in. Please check your credentials.");
+      // Check for specific error codes from the API
+      if (error.message && error.message.includes("not approved")) {
+        setPendingApproval(true);
+        setErrorMessage("Your account is awaiting admin approval. Please contact your coordinator.");
+      } else if (error.message && error.message.includes("Invalid credentials")) {
+        setErrorMessage("Invalid email or password");
+      } else {
+        setErrorMessage(error.message || "Login failed. Please try again.");
+      }
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
@@ -171,23 +145,33 @@ function LoginModal({ isOpen, onClose, onSwitchToRegister }) {
             />
           </div>
 
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2 text-gray-600 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(event) => setRememberMe(event.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              Remember me
-            </label>
-            <button
-              type="button"
-              onClick={() => navigate("/forgot-password")}
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Forgot Password?
-            </button>
+        {/* Login Button */}
+        <button 
+          onClick={handleLogin}
+          disabled={isLoading}
+          className="w-full mt-4 bg-linear-to-r from-blue-500 to-teal-500 text-white
+                     font-semibold py-2.5 rounded-lg text-sm
+                     hover:from-blue-600 hover:to-teal-600
+                     focus:outline-none focus:ring-4 focus:ring-blue-200
+                     transform hover:scale-[1.02] transition-all duration-200
+                     shadow-md hover:shadow-lg
+                     disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+        >
+          {isLoading ? "Logging in..." : "Login to Dashboard"}
+        </button>
+
+        {/* Helper text */}
+        <div className="space-y-1.5">
+          <p className="text-xs text-center text-gray-500 flex items-center justify-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Works offline after first login.
+          </p>
+          <div className="text-xs text-center text-gray-400 space-y-0.5">
+            <p className="font-semibold text-gray-500">Demo Credentials:</p>
+            <p>Teacher: <span className="text-blue-600">teacher1@school.org</span> or <span className="text-blue-600">teacher2@school.org</span></p>
+            <p>Admin: <span className="text-purple-600">admin</span> / Password: <span className="font-mono">123</span></p>
           </div>
 
           <button

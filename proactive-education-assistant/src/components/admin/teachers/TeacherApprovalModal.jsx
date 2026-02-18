@@ -1,19 +1,25 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { approvalService } from '../../../services/approvalService';
 import { FaTimes } from 'react-icons/fa';
 
 function TeacherApprovalModal({ teacher, classes, onClose, onSuccess }) {
+  const classIdByName = useMemo(() => {
+    const map = new Map();
+    classes.forEach(c => map.set(c.name, c.id));
+    return map;
+  }, [classes]);
+
   const [selectedClasses, setSelectedClasses] = useState([]);
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
 
-  const handleClassToggle = (className) => {
+  const handleClassToggle = (classId) => {
     setSelectedClasses(prev =>
-      prev.includes(className)
-        ? prev.filter(c => c !== className)
-        : [...prev, className]
+      prev.includes(classId)
+        ? prev.filter(c => c !== classId)
+        : [...prev, classId]
     );
   };
 
@@ -92,8 +98,8 @@ function TeacherApprovalModal({ teacher, classes, onClose, onSuccess }) {
                     >
                       <input
                         type="checkbox"
-                        checked={selectedClasses.includes(cls.name)}
-                        onChange={() => handleClassToggle(cls.name)}
+                        checked={selectedClasses.includes(cls.id)}
+                        onChange={() => handleClassToggle(cls.id)}
                         className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                       <div>
@@ -105,7 +111,7 @@ function TeacherApprovalModal({ teacher, classes, onClose, onSuccess }) {
                 </div>
                 {selectedClasses.length > 0 && (
                   <p className="text-sm text-gray-600 mt-2">
-                    Selected: {selectedClasses.join(', ')}
+                    Selected: {selectedClasses.map(id => classes.find(c => c.id === id)?.name || id).join(', ')}
                   </p>
                 )}
               </div>
