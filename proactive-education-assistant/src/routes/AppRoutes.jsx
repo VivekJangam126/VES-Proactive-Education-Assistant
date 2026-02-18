@@ -12,6 +12,12 @@ import DashboardPage from "../pages/teacher/DashboardPage";
 import StudentListPage from "../pages/teacher/StudentListPage";
 import StudentProfilePage from "../pages/teacher/StudentProfilePage";
 import ProfilePage from "../pages/teacher/ProfilePage";
+import DataEntryPage from "../pages/teacher/DataEntryPage";
+import GamificationPage from "../pages/teacher/GamificationPage";
+import AddStudentPage from "../pages/teacher/AddStudentPage";
+import MyClassesPage from "../pages/teacher/MyClassesPage";
+import LoginPage from "../pages/teacher/LoginPage";
+
 import MainLayout from "../layouts/MainLayout";
 
 // Admin pages
@@ -19,8 +25,7 @@ import AdminLayout from "../layouts/AdminLayout";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import TeacherManagement from "../pages/admin/TeacherManagement";
 import ClassManagement from "../pages/admin/ClassManagement";
-import StudentOverview from "../pages/admin/StudentOverview";
-import DataImport from "../pages/admin/DataImport";
+import SubjectManagement from "../pages/admin/SubjectManagement";
 import Analytics from "../pages/admin/Analytics";
 
 export default function AppRoutes() {

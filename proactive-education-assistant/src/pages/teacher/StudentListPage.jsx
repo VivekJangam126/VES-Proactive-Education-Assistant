@@ -123,6 +123,7 @@ export default function StudentListPage() {
       setFormMessage("Please fill all fields");
       return;
     }
+  });
 
     try {
       await studentService.createStudent({
@@ -191,8 +192,11 @@ export default function StudentListPage() {
     const blob = new Blob([template], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = url;
-    link.download = "student_template.csv";
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `students_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
     link.click();
     window.URL.revokeObjectURL(url);
   };
@@ -205,7 +209,7 @@ export default function StudentListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6 px-4">
+    <div className="px-6 py-6 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -251,8 +255,6 @@ export default function StudentListPage() {
                 </div>
               )}
             </div>
-          </div>
-        )}
 
         {error && (
           <div className="mb-6 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
@@ -279,33 +281,25 @@ export default function StudentListPage() {
                 !mobileMenuOpen ? "hidden md:block" : ""
               }`}
             >
-              <nav className="flex flex-col">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => {
-                        setActiveTab(tab.id);
-                        setMobileMenuOpen(false);
-                        setFormMessage("");
-                        setImportMessage("");
-                      }}
-                      className={`flex items-center gap-3 px-4 py-3 border-l-4 transition-colors text-left ${
-                        isActive
-                          ? "border-l-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium"
-                          : "border-l-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                      }`}
-                    >
-                      <Icon className="text-lg" />
-                      <span className="text-sm">{tab.label}</span>
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
+              <option value="all">All Risks</option>
+              <option value="high">High Risk</option>
+              <option value="medium">Medium Risk</option>
+              <option value="low">Low Risk</option>
+            </select>
+
+            {/* Filter by Class */}
+            <select
+              value={filterClass}
+              onChange={(e) => setFilterClass(e.target.value)}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="all">All Classes</option>
+              {uniqueClasses.map(cls => (
+                <option key={cls} value={cls}>{cls}</option>
+              ))}
+            </select>
           </div>
+        </div>
 
           <div className="flex-1 min-w-0">
             {activeTab === "list" && (
@@ -604,6 +598,7 @@ export default function StudentListPage() {
             )}
           </div>
         </div>
+
       </div>
     </div>
   );

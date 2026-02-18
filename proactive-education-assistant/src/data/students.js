@@ -1,7 +1,7 @@
 export const students = [
   {
     id: 1,
-    name: "Rajesh Kumar",
+    name: "Anshul Raut",
     class: "Grade 7A",
     grade: 7,
     attendance: 62,
@@ -10,7 +10,7 @@ export const students = [
   },
   {
     id: 2,
-    name: "Priya Sharma",
+    name: "Aditya Honrao",
     class: "Grade 7B",
     grade: 7,
     attendance: 68,
@@ -19,7 +19,7 @@ export const students = [
   },
   {
     id: 3,
-    name: "Amit Singh",
+    name: "Vivek Jangam",
     class: "Grade 6A",
     grade: 6,
     attendance: 75,
@@ -28,7 +28,7 @@ export const students = [
   },
   {
     id: 4,
-    name: "Sneha Patel",
+    name: "Alijba Pathan",
     class: "Grade 7A",
     grade: 7,
     attendance: 78,

@@ -3,30 +3,30 @@ function RiskBadge({ level }) {
     switch (level?.toLowerCase()) {
       case 'high':
         return {
-          bg: 'bg-red-100',
+          bg: 'bg-red-50',
           text: 'text-red-700',
-          border: 'border-red-300',
+          dot: 'bg-red-500',
           label: 'High Risk'
         };
       case 'medium':
         return {
-          bg: 'bg-yellow-100',
+          bg: 'bg-yellow-50',
           text: 'text-yellow-700',
-          border: 'border-yellow-300',
-          label: 'Medium Risk'
+          dot: 'bg-yellow-500',
+          label: 'Medium'
         };
       case 'low':
         return {
-          bg: 'bg-green-100',
+          bg: 'bg-green-50',
           text: 'text-green-700',
-          border: 'border-green-300',
-          label: 'Low Risk'
+          dot: 'bg-green-500',
+          label: 'Safe'
         };
       default:
         return {
-          bg: 'bg-gray-100',
+          bg: 'bg-gray-50',
           text: 'text-gray-700',
-          border: 'border-gray-300',
+          dot: 'bg-gray-500',
           label: 'Unknown'
         };
     }
@@ -36,9 +36,10 @@ function RiskBadge({ level }) {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border
-        ${styles.bg} ${styles.text} ${styles.border}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
+        ${styles.bg} ${styles.text}`}
     >
+      <span className={`w-1.5 h-1.5 rounded-full ${styles.dot}`}></span>
       {styles.label}
     </span>
   );

@@ -1,193 +1,3 @@
-// import { useNavigate } from "react-router-dom";
-// import { students } from "../../data/students";
-// import StatCard from "../../components/StatCard";
-// import RiskBadge from "../../components/RiskBadge";
-// import {
-//   FaUsers,
-//   FaExclamationTriangle,
-//   FaCheckCircle,
-//   FaEye,
-//   FaArrowRight,
-//   FaWifi,
-//   FaInfoCircle,
-// } from "react-icons/fa";
-// import { useState } from "react";
-
-// export default function DashboardPage() {
-//   const navigate = useNavigate();
-//   const [isOnline] = useState(true); // Mock online status
-
-//   // Calculate risk statistics
-//   const stats = {
-//     total: students.length,
-//     highRisk: students.filter((s) => s.riskLevel === "high").length,
-//     mediumRisk: students.filter((s) => s.riskLevel === "medium").length,
-//     lowRisk: students.filter((s) => s.riskLevel === "low").length,
-//   };
-
-//   // Get top 5 high-risk students
-//   const highRiskStudents = students
-//     .filter((s) => s.riskLevel === "high")
-//     .slice(0, 5);
-
-//   return (
-//     <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
-//       <div className="max-w-7xl mx-auto">
-//         {/* 1️⃣ Page Header */}
-//         <div className="mb-8">
-//           <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-//           <p className="text-gray-600">
-//             Early warning overview of student dropout risk.
-//           </p>
-//         </div>
-
-//         {/* 2️⃣ Risk Summary Cards */}
-//         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-//           <StatCard
-//             title="Total Students"
-//             value={stats.total}
-//             icon={FaUsers}
-//             bgColor="bg-blue-100"
-//             textColor="text-blue-600"
-//           />
-//           <StatCard
-//             title="High Risk"
-//             value={stats.highRisk}
-//             icon={FaExclamationTriangle}
-//             bgColor="bg-red-100"
-//             textColor="text-red-600"
-//           />
-//           <StatCard
-//             title="Medium Risk"
-//             value={stats.mediumRisk}
-//             icon={FaExclamationTriangle}
-//             bgColor="bg-yellow-100"
-//             textColor="text-yellow-600"
-//           />
-//           <StatCard
-//             title="Low Risk"
-//             value={stats.lowRisk}
-//             icon={FaCheckCircle}
-//             bgColor="bg-green-100"
-//             textColor="text-green-600"
-//           />
-//         </div>
-
-//         {/* 3️⃣ High-Risk Students List (MOST IMPORTANT) */}
-//         <div className="bg-white rounded-lg shadow-md border-2 border-red-200 mb-6">
-//           <div className="bg-red-50 px-6 py-4 border-b border-red-200">
-//             <div className="flex items-center gap-3">
-//               <FaExclamationTriangle className="text-red-600 text-xl" />
-//               <div>
-//                 <h2 className="text-xl font-bold text-gray-900">
-//                   Students Needing Immediate Attention
-//                 </h2>
-//                 <p className="text-sm text-gray-700">
-//                   High-risk students require urgent intervention
-//                 </p>
-//               </div>
-//             </div>
-//           </div>
-
-//           {highRiskStudents.length > 0 ? (
-//             <div className="divide-y divide-gray-200">
-//               {highRiskStudents.map((student) => (
-//                 <div
-//                   key={student.id}
-//                   className="px-6 py-4 hover:bg-red-50 transition-colors"
-//                 >
-//                   <div className="flex items-center justify-between gap-4">
-//                     <div className="flex-1">
-//                       <h3 className="text-lg font-semibold text-gray-900">
-//                         {student.name}
-//                       </h3>
-//                       <div className="flex items-center gap-3 mt-1">
-//                         <span className="text-sm text-gray-600">
-//                           {student.class}
-//                         </span>
-//                         <span className="text-sm text-gray-500">
-//                           Attendance: {student.attendance}%
-//                         </span>
-//                       </div>
-//                     </div>
-//                     <div className="flex items-center gap-3">
-//                       <RiskBadge level={student.riskLevel} />
-//                       <button
-//                         onClick={() => navigate(`/students/${student.id}`)}
-//                         className="inline-flex items-center gap-2 px-4 py-2 bg-red-600
-//                                    text-white rounded-lg hover:bg-red-700 transition-colors
-//                                    font-medium text-sm"
-//                       >
-//                         <FaEye />
-//                         <span className="hidden sm:inline">View Profile</span>
-//                       </button>
-//                     </div>
-//                   </div>
-//                 </div>
-//               ))}
-//             </div>
-//           ) : (
-//             <div className="px-6 py-8 text-center">
-//               <FaCheckCircle className="mx-auto text-4xl text-green-500 mb-3" />
-//               <p className="text-gray-600">No high-risk students at this time.</p>
-//             </div>
-//           )}
-//         </div>
-
-//         {/* 4️⃣ Primary Action Button */}
-//         <div className="bg-linear-to-r from-blue-500 to-teal-500 rounded-lg shadow-lg p-6 mb-6">
-//           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-//             <div className="text-white">
-//               <h3 className="text-xl font-bold mb-1">
-//                 View Complete Student List
-//               </h3>
-//               <p className="text-blue-100 text-sm">
-//                 Monitor all students and filter by risk level
-//               </p>
-//             </div>
-//             <button
-//               onClick={() => navigate("/students")}
-//               className="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-600
-//                          rounded-lg hover:bg-blue-50 transition-colors font-semibold
-//                          shadow-md hover:shadow-lg"
-//             >
-//               View All Students
-//               <FaArrowRight />
-//             </button>
-//           </div>
-//         </div>
-
-//         {/* 5️⃣ Offline / Sync Status */}
-//         <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-//           <div className="flex items-start gap-3">
-//             {isOnline ? (
-//               <FaWifi className="text-blue-600 text-xl mt-0.5" />
-//             ) : (
-//               <FaInfoCircle className="text-gray-500 text-xl mt-0.5" />
-//             )}
-//             <div className="flex-1">
-//               <h4 className="font-semibold text-gray-900 mb-1">
-//                 {isOnline ? "Online" : "Offline Mode"}
-//               </h4>
-//               <p className="text-sm text-gray-700">
-//                 {isOnline
-//                   ? "All data is synced and up to date."
-//                   : "Offline mode: Data will sync when internet is available."}
-//               </p>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-
-
-
-
-
-
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -302,7 +112,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6 px-4 sm:px-6 lg:px-8">
+    <div className="px-6 py-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* 1️⃣ Page Header */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -410,19 +220,15 @@ export default function DashboardPage() {
               />
             </div>
 
-        {/* 3️⃣ High-Risk Students */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border-2 border-red-200 dark:border-red-800 mb-6">
-          <div className="bg-red-50 dark:bg-red-900/30 px-6 py-4 border-b border-red-200 dark:border-red-800">
-            <div className="flex items-center gap-3">
-              <FaExclamationTriangle className="text-red-600 dark:text-red-400 text-xl" />
+        {/* Risk Trend Graph */}
+        <div className="mb-8">
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {t("dashboard.high_risk_section_title")}
-                </h2>
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  {t("dashboard.high_risk_section_subtitle")}
-                </p>
+                <h2 className="text-lg font-semibold text-gray-900">Risk Analysis Trend</h2>
+                <p className="text-sm text-gray-600 mt-1">Student risk levels over the past 5 months</p>
               </div>
+              <FaChartLine className="text-2xl text-blue-600" />
             </div>
           </div>
 
@@ -465,14 +271,23 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="px-6 py-8 text-center">
-              <FaCheckCircle className="mx-auto text-4xl text-green-500 dark:text-green-400 mb-3" />
-              <p className="text-gray-600 dark:text-gray-400">
-                {t("dashboard.no_high_risk")}
-              </p>
+
+            {/* Legend */}
+            <div className="flex items-center justify-center gap-6 mt-6 pt-6 border-t border-gray-200">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-red-500 rounded"></div>
+                <span className="text-sm text-gray-600">High Risk</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                <span className="text-sm text-gray-600">Medium Risk</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-green-500 rounded"></div>
+                <span className="text-sm text-gray-600">Low Risk</span>
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* 4️⃣ Primary Action */}
@@ -488,37 +303,62 @@ export default function DashboardPage() {
             </div>
             <button
               onClick={() => navigate("/students")}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-100 text-blue-600 dark:text-blue-700
-                         rounded-lg hover:bg-blue-50 dark:hover:bg-white transition-colors font-semibold
-                         shadow-md hover:shadow-lg"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm"
             >
-              {t("dashboard.view_all_students")}
-              <FaArrowRight />
+              View All
             </button>
           </div>
-        </div>
 
-        {/* 5️⃣ Offline / Sync Status */}
-        <div className="bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            {isOnline ? (
-              <FaWifi className="text-blue-600 dark:text-blue-400 text-xl mt-0.5" />
-            ) : (
-              <FaInfoCircle className="text-gray-500 dark:text-gray-400 text-xl mt-0.5" />
-            )}
-            <div className="flex-1">
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
-                {isOnline
-                  ? t("dashboard.online")
-                  : t("dashboard.offline")}
-              </h4>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                {isOnline
-                  ? t("dashboard.online_desc")
-                  : t("dashboard.offline_desc")}
+          {highRiskStudents.length === 0 ? (
+            <div className="p-8 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-50 rounded-full mb-4">
+                <FaCheckCircle className="text-3xl text-green-600" />
+              </div>
+              <p className="text-gray-600">
+                No high-risk students currently
               </p>
             </div>
-          </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="text-left px-6 py-3 text-sm font-semibold text-gray-700">Student</th>
+                    <th className="text-left px-6 py-3 text-sm font-semibold text-gray-700">Class</th>
+                    <th className="text-left px-6 py-3 text-sm font-semibold text-gray-700">Attendance</th>
+                    <th className="text-left px-6 py-3 text-sm font-semibold text-gray-700">Risk Level</th>
+                    <th className="px-6 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {highRiskStudents.slice(0, 5).map(student => (
+                    <tr
+                      key={student.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-6 py-4 font-medium text-gray-900">
+                        {student.name}
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">{student.class}</td>
+                      <td className="px-6 py-4 text-gray-600">{student.attendance}%</td>
+                      <td className="px-6 py-4">
+                        <RiskBadge level={student.riskLevel} />
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => navigate(`/students/${student.id}`)}
+                          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          <FaEye />
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
           </>
         )}
@@ -527,3 +367,31 @@ export default function DashboardPage() {
   );
 }
 
+function StatCard({ title, value, icon, color }) {
+  const colorClasses = {
+    blue: 'bg-blue-50 text-blue-600',
+    red: 'bg-red-50 text-red-600',
+    yellow: 'bg-yellow-50 text-yellow-600',
+    green: 'bg-green-50 text-green-600',
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-6">
+      <div className="flex justify-between items-start">
+        <div>
+          <p className="text-sm font-medium text-gray-600 mb-2">
+            {title}
+          </p>
+          <p className="text-3xl font-semibold text-gray-900">
+            {value}
+          </p>
+        </div>
+        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
+          <div className="text-xl">
+            {icon}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

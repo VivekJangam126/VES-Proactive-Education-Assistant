@@ -1,31 +1,13 @@
-import { useState, useEffect } from 'react';
-import { adminService } from '../../services/adminService';
+import { useState } from 'react';
+import { useAdmin } from '../../context/AdminContext';
 import TeacherTable from '../../components/admin/teachers/TeacherTable';
 import TeacherApprovalModal from '../../components/admin/teachers/TeacherApprovalModal';
 import AssignClassModal from '../../components/admin/teachers/AssignClassModal';
 
 function TeacherManagement() {
-  const [teachers, setTeachers] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { teachers, classes, loading, refreshTeachers } = useAdmin();
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [modalType, setModalType] = useState(null); // 'approval' or 'assign'
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    const [teachersResult, classesResult] = await Promise.all([
-      adminService.getTeachers(),
-      adminService.getClasses()
-    ]);
-    
-    if (teachersResult.success) setTeachers(teachersResult.data);
-    if (classesResult.success) setClasses(classesResult.data);
-    setLoading(false);
-  };
 
   const handleApproval = (teacher) => {
     setSelectedTeacher(teacher);
@@ -43,7 +25,7 @@ function TeacherManagement() {
   };
 
   const handleRefresh = () => {
-    loadData();
+    refreshTeachers();
   };
 
   if (loading) {

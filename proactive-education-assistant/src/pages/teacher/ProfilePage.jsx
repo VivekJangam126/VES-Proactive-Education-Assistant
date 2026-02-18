@@ -80,12 +80,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Profile</h1>
-          <p className="text-gray-600 dark:text-gray-300">Manage your account information</p>
-        </div>
+    <div className="bg-slate-100 min-h-screen px-6 py-6">
+      <div className="max-w-6xl mx-auto space-y-6">
 
         {error && (
           <div className="mb-6 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg p-4 flex items-start gap-3">
@@ -150,7 +146,12 @@ export default function ProfilePage() {
                   </>
                 )}
               </div>
-            </div>
+              {edit && (
+                <span className="absolute bottom-0 right-0 bg-white text-slate-900 text-xs px-1 rounded">
+                  Edit
+                </span>
+              )}
+            </label>
 
             <div className="space-y-6">
               <div>
@@ -192,106 +193,70 @@ export default function ProfilePage() {
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subject/Specialization</label>
-                    {editMode ? (
-                      <input
-                        type="text"
-                        name="subject"
-                        value={formData.subject}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="e.g., Mathematics"
-                      />
-                    ) : (
-                      <p className="text-gray-900 dark:text-white py-2">{teacher.subject || 'Not specified'}</p>
-                    )}
-                  </div>
+        {/* DETAILS GRID */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Account Status</label>
-                    <p className="text-gray-900 dark:text-white py-2 capitalize">{teacher.status}</p>
-                  </div>
-                </div>
-              </div>
+          <Field label="Email" name="email" edit={edit} value={form.email} onChange={change} />
+          <Field label="Phone" name="phone" edit={edit} value={form.phone} onChange={change} />
+          <Field label="Location" name="location" edit={edit} value={form.location} onChange={change} />
+          <Field label="School" name="school" edit={edit} value={form.school} onChange={change} />
+          <Field label="Subject" name="subject" edit={edit} value={form.subject} onChange={change} />
+          <Field label="Experience" name="experience" edit={edit} value={form.experience} onChange={change} />
+          <Field label="Qualification" name="qualification" edit={edit} value={form.qualification} onChange={change} />
 
-              <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <FaChalkboardTeacher className="text-blue-600" />
-                  Assigned Classes
-                </h3>
-                {teacher.assignedClasses && teacher.assignedClasses.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {teacher.assignedClasses.map((cls, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 border border-blue-200 dark:border-blue-700 text-sm font-medium"
-                      >
-                        {cls}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-600 dark:text-gray-300">No classes assigned</p>
-                )}
-              </div>
-
-              <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <FaLock className="text-blue-600" />
-                  Security Settings
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">Two-Factor Authentication</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">Add an extra layer of security to your account</p>
-                    </div>
-                    <button className="text-blue-600 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 text-sm font-medium">Enable</button>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">Login Alerts</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">Get notified about new device logins</p>
-                    </div>
-                    <button className="text-blue-600 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 text-sm font-medium">Manage</button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <FaSignOutAlt className="text-red-600 text-xl" />
-                    <div>
-                      <p className="font-semibold text-red-700 dark:text-red-200">Sign Out</p>
-                      <p className="text-sm text-red-600 dark:text-red-300">You can sign back in anytime</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        <div className="mt-6 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <FaCalendarAlt className="text-blue-600 dark:text-blue-300 text-xl mt-1" />
-            <div>
-              <h4 className="font-semibold text-blue-900 dark:text-blue-100">Account Information</h4>
-              <p className="text-sm text-blue-800 dark:text-blue-100/80 mt-1">
-                Your profile information is used to personalize your experience and manage class assignments. Contact your administrator if you need to update your assigned classes.
-              </p>
-            </div>
-          </div>
+        {/* STATS */}
+        <div className="grid sm:grid-cols-3 gap-4">
+          <Stat title="Students Managed" value="48" />
+          <Stat title="Dropouts Prevented" value="12" />
+          <Stat title="Current Level" value="Level 3" />
         </div>
+
+        {/* LOGOUT */}
+        <div className="bg-white border rounded-lg p-5 flex justify-between items-center">
+          <span className="text-sm text-slate-600">Account Active</span>
+          <button
+            onClick={() => {
+              logoutTeacher();
+              navigate("/");
+            }}
+            className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+          >
+            Logout
+          </button>
+        </div>
+
       </div>
+    </div>
+  );
+}
+
+/* -------- SMALL COMPONENTS -------- */
+
+function Field({ label, value, edit, name, onChange }) {
+  return (
+    <div className="bg-white border rounded-lg p-4">
+      <p className="text-xs text-slate-500 mb-1">{label}</p>
+      {edit ? (
+        <input
+          name={name}
+          value={value}
+          onChange={onChange}
+          className="border rounded-md px-3 py-2 w-full text-sm"
+        />
+      ) : (
+        <p className="font-medium text-slate-900">{value || "-"}</p>
+      )}
+    </div>
+  );
+}
+
+function Stat({ title, value }) {
+  return (
+    <div className="bg-white border rounded-lg p-4 text-center">
+      <p className="text-xs text-slate-500">{title}</p>
+      <p className="text-2xl font-semibold text-blue-600 mt-1">{value}</p>
     </div>
   );
 }

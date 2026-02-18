@@ -3,68 +3,79 @@ function RiskSummaryCards({ riskDistribution }) {
     {
       level: 'high',
       count: riskDistribution?.high || 0,
-      color: 'red',
-      bgColor: 'bg-red-100',
-      textColor: 'text-red-600',
-      borderColor: 'border-red-500'
+      icon: '⚠️',
+      bgColor: 'bg-red-50',
+      textColor: 'text-red-700',
+      borderColor: 'border-red-500',
+      barColor: 'bg-red-500',
+      accentColor: 'from-red-500 to-red-600'
     },
     {
       level: 'medium',
       count: riskDistribution?.medium || 0,
-      color: 'yellow',
-      bgColor: 'bg-yellow-100',
-      textColor: 'text-yellow-600',
-      borderColor: 'border-yellow-500'
+      icon: '⚡',
+      bgColor: 'bg-yellow-50',
+      textColor: 'text-yellow-700',
+      borderColor: 'border-yellow-500',
+      barColor: 'bg-yellow-500',
+      accentColor: 'from-yellow-500 to-yellow-600'
     },
     {
       level: 'low',
       count: riskDistribution?.low || 0,
-      color: 'green',
-      bgColor: 'bg-green-100',
-      textColor: 'text-green-600',
-      borderColor: 'border-green-500'
+      icon: '✅',
+      bgColor: 'bg-green-50',
+      textColor: 'text-green-700',
+      borderColor: 'border-green-500',
+      barColor: 'bg-green-500',
+      accentColor: 'from-green-500 to-green-600'
     }
   ];
 
   const total = cards.reduce((sum, card) => sum + card.count, 0);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
       {cards.map((card) => {
         const percentage = total > 0 ? Math.round((card.count / total) * 100) : 0;
         
         return (
           <div
             key={card.level}
-            className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${card.borderColor}`}
+            className={`${card.bgColor} rounded-lg sm:rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-8 border-l-4 ${card.borderColor} shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}
           >
-            <div className="flex items-center justify-between">
+            {/* Header with Icon */}
+            <div className="flex items-start justify-between gap-3 mb-4 sm:mb-5 md:mb-6">
               <div>
-                <p className="text-sm font-medium text-gray-600 uppercase">
+                <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">
                   {card.level} Risk
                 </p>
-                <p className={`text-4xl font-bold mt-2 ${card.textColor}`}>
+                <p className={`text-3xl sm:text-4xl md:text-5xl font-bold ${card.textColor}`}>
                   {card.count}
                 </p>
-                <p className="text-sm text-gray-500 mt-1">
-                  {percentage}% of total students
-                </p>
               </div>
-              <div className={`${card.bgColor} p-4 rounded-full`}>
-                <div className={`w-12 h-12 flex items-center justify-center text-2xl font-bold ${card.textColor}`}>
-                  {percentage}%
-                </div>
+              <div className="text-2xl sm:text-3xl md:text-4xl opacity-80 flex-shrink-0">{card.icon}</div>
+            </div>
+
+            {/* Stats and Percentage */}
+            <div className="flex items-center justify-between gap-2 mb-4 sm:mb-5 md:mb-6">
+              <p className="text-xs sm:text-sm text-gray-600">
+                {percentage}% of students
+              </p>
+              <div className={`${card.textColor} text-lg sm:text-xl font-bold`}>
+                {percentage}%
               </div>
             </div>
 
             {/* Progress Bar */}
-            <div className="mt-4">
-              <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="space-y-2">
+              <div className="w-full bg-gray-200 bg-opacity-50 rounded-full h-2 sm:h-3 overflow-hidden">
                 <div
-                  className={`h-2 rounded-full bg-${card.color}-600`}
+                  className={`h-full ${card.barColor} rounded-full transition-all duration-500 ease-out shadow-md`}
                   style={{ width: `${percentage}%` }}
                 />
               </div>
+              <p className="text-xs text-gray-500">Total: {total} students</p>
             </div>
           </div>
         );

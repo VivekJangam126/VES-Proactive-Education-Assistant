@@ -42,9 +42,15 @@ export const TeacherProvider = ({ children }) => {
     setTeacher(null);
     setSelectedClass(null);
     localStorage.removeItem('teacherData');
-    localStorage.removeItem('loggedIn');
-    localStorage.removeItem('userRole');
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
     localStorage.removeItem('adminData');
+    localStorage.removeItem('school_id');
+    localStorage.removeItem('school_name');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('role');
+    sessionStorage.removeItem('school_id');
+    sessionStorage.removeItem('school_name');
     // Trigger custom event for route update
     window.dispatchEvent(new Event("localStorageUpdate"));
   };

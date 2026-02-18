@@ -1,8 +1,10 @@
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { TeacherProvider } from "./context/TeacherContext";
+import { GamificationProvider } from "./context/GamificationContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import AppRoutes from "./routes/AppRoutes";
-import Chatbot from "./pages/chatbot/Chatbot";
+import Chatbot from "./components/chatbot/Chatbot";
 
 export default function App() {
   return (

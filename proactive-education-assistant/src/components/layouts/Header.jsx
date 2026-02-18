@@ -1,278 +1,133 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaGraduationCap, FaBars, FaTimes, FaUserCircle, FaSun, FaMoon } from 'react-icons/fa';
-import { useTeacher } from '../../context/TeacherContext';
-import { useTheme } from '../../context/ThemeContext';
-import LoginModal from '../auth/login.jsx';
-import RegisterModal from '../auth/register.jsx';
-import { useTranslation } from 'react-i18next';
-import LanguageSelector from '../LanguageSelector.jsx';
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { FaBars, FaUserCircle, FaGraduationCap, FaBell, FaWifi } from "react-icons/fa";
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "../LanguageSelector";
 
-function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [authType, setAuthType] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { teacher } = useTeacher();
-  const { theme, toggleTheme } = useTheme();
+function Header({ onToggleSidebar }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications] = useState([
+    { id: 1, message: "New high-risk student alert", time: "5 min ago", unread: true },
+    { id: 2, message: "Attendance report ready", time: "1 hour ago", unread: true },
+    { id: 3, message: "Class schedule updated", time: "2 hours ago", unread: false },
+  ]);
 
-  // Check login status
+  const unreadCount = notifications.filter(n => n.unread).length;
+
   useEffect(() => {
-    const checkLoginStatus = () => {
-      setIsLoggedIn(!!localStorage.getItem("loggedIn"));
-    };
-    
-    checkLoginStatus();
-    window.addEventListener("localStorageUpdate", checkLoginStatus);
-    
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     return () => {
-      window.removeEventListener("localStorageUpdate", checkLoginStatus);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, []);
-
-  // Navigation items
-  const navItems = [
-    { path: isLoggedIn ? '/dashboard' : '/', label: t('nav.dashboard') },
-    { path: '/students', label: t('nav.students') },
-    { path: '/about', label: t('nav.about') },
-    { path: '/contact', label: t('nav.contact') },
-  ];
-
-  // Handle scroll effect
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Check if link is active
-  const isActive = (path) => location.pathname === path;
-
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location]);
 
   return (
-    <>
-      <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? 'bg-white dark:bg-gray-900 shadow-md'
-            : 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-sm'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Left: Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
-              <div className="bg-linear-to-br from-blue-600 to-teal-500 p-2 rounded-lg shadow-md group-hover:shadow-lg transition-all">
-                <FaGraduationCap className="text-white text-2xl" />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-xl font-bold text-gray-800 dark:text-white leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  {t('app.brand_full')}
-                </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t('app.tagline')}</p>
-              </div>
-              <div className="sm:hidden">
-                <h1 className="text-lg font-bold text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  {t('app.brand_short')}
-                </h1>
-              </div>
-            </Link>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+      <div className="h-16 px-4 flex items-center justify-between">
+        
+        {/* Left */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onToggleSidebar}
+            className="p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
+          >
+            <FaBars size={20} />
+          </button>
 
-            {/* Center: Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-1">
-              {navItems.map((item) => {
-                const active = isActive(item.path);
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                      active
-                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
-                        : 'text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            {/* Right: Auth Buttons (Desktop) */}
-            <div className="hidden md:flex items-center gap-3">
-              {isLoggedIn ? (
-                <button
-                  onClick={() => navigate('/profile')}
-                  className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-md transition-all"
-                  title={t('auth.profile')}
-                >
-                  <FaUserCircle className="text-2xl" />
-                  <span className="text-sm font-medium">{teacher?.name?.split(' ')[0] || t('auth.profile')}</span>
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => {
-                      setAuthType('login');
-                      setOpen(true);
-                    }}
-                    className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300
-                               border border-blue-600 dark:border-blue-400 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-                  >
-                    {t('auth.login')}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setAuthType('register');
-                      setOpen(true);
-                    }}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-600
-                               rounded-md hover:bg-blue-700 dark:hover:bg-blue-700 transition-colors shadow-sm"
-                  >
-                    {t('auth.signup')}
-                  </button>
-                </>
-              )}
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-                aria-label="Toggle theme"
-              >
-                {theme === 'light' ? <FaMoon size={20} /> : <FaSun size={20} />}
-              </button>
-              <LanguageSelector />
+          <Link to="/dashboard" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 flex items-center justify-center rounded-lg">
+              <FaGraduationCap className="text-white text-xl" />
             </div>
-
-            {/* Mobile Menu Button */}
-            <div className="md:hidden flex items-center gap-2">
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-                aria-label="Toggle theme"
-              >
-                {theme === 'light' ? <FaMoon size={20} /> : <FaSun size={20} />}
-              </button>
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                aria-label={t('aria.toggle_menu')}
-              >
-                {mobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
-              </button>
+            <div className="hidden sm:block">
+              <h1 className="text-lg font-semibold text-gray-900">
+                {t('app.brand_full', 'Proactive Education')}
+              </h1>
+              <p className="text-xs text-gray-500">{t('app.tagline', 'Assistant')}</p>
             </div>
-          </div>
+          </Link>
         </div>
 
-        {/* Mobile Navigation */}
-        <div
-          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-            mobileMenuOpen ? 'max-h-screen border-t border-gray-200 dark:border-gray-700' : 'max-h-0'
-          }`}
-        >
-          <div className="px-4 py-4 space-y-2 bg-white dark:bg-gray-900">
-            {/* Mobile Nav Links */}
-            {navItems.map((item) => {
-              const active = isActive(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`block px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                    active
-                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
-                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-
-            {/* Mobile Auth Buttons */}
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-              {isLoggedIn ? (
-                <button
-                  onClick={() => {
-                    navigate('/profile');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <FaUserCircle className="text-xl" />
-                  <span className="font-medium">{teacher?.name || t('auth.my_profile')}</span>
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => {
-                      setAuthType('login');
-                      setOpen(true);
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300
-                               border border-blue-600 dark:border-blue-400 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-                  >
-                    {t('auth.login')}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setAuthType('register');
-                      setOpen(true);
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-600
-                               rounded-md hover:bg-blue-700 dark:hover:bg-blue-700 transition-colors"
-                  >
-                    {t('auth.signup')}
-                  </button>
-                </>
-              )}
-              <div className="pt-2">
-                <LanguageSelector className="w-full" />
-              </div>
-            </div>
+        {/* Right */}
+        <div className="flex items-center gap-3">
+          {/* Online/Offline Status */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200">
+            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <span className="text-xs font-medium text-gray-700 hidden sm:inline">
+              {isOnline ? 'Online' : 'Offline'}
+            </span>
+            <FaWifi className={`text-sm ${isOnline ? 'text-green-600' : 'text-red-600'}`} />
           </div>
+
+          {/* Notifications */}
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
+            >
+              <FaBell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notifications Dropdown */}
+            {showNotifications && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setShowNotifications(false)}
+                ></div>
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                  <div className="p-4 border-b border-gray-200">
+                    <h3 className="font-semibold text-gray-900">Notifications</h3>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
+                          notification.unread ? 'bg-blue-50' : ''
+                        }`}
+                      >
+                        <p className="text-sm text-gray-900">{notification.message}</p>
+                        <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="p-3 text-center border-t border-gray-200">
+                    <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                      View All Notifications
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          <LanguageSelector />
+          
+          <button
+            onClick={() => navigate("/profile")}
+            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            <FaUserCircle className="text-xl" />
+            <span className="text-sm font-medium hidden sm:inline">Profile</span>
+          </button>
         </div>
-      </header>
 
-      {/* Spacer to prevent content from hiding under fixed header */}
-      <div className="h-16"></div>
-
-      {/* Auth Modals */}
-      <LoginModal
-        isOpen={open && authType === 'login'}
-        onClose={() => {
-          setOpen(false);
-          setAuthType(null);
-        }}
-        onSwitchToRegister={() => {
-          setAuthType('register');
-        }}
-      />
-
-      <RegisterModal
-        isOpen={open && authType === 'register'}
-        onClose={() => {
-          setOpen(false);
-          setAuthType(null);
-        }}
-        onSwitchToLogin={() => {
-          setAuthType('login');
-        }}
-      />
-    </>
+      </div>
+    </header>
   );
 }
 
